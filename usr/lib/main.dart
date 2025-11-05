@@ -7,114 +7,254 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Optimizador de Cortes',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const OptimizationScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+class CutPiece {
+  final TextEditingController lengthController = TextEditingController();
+  final TextEditingController widthController = TextEditingController();
+  final TextEditingController quantityController = TextEditingController();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class OptimizationScreen extends StatefulWidget {
+  const OptimizationScreen({super.key});
 
-  void _incrementCounter() {
+  @override
+  State<OptimizationScreen> createState() => _OptimizationScreenState();
+}
+
+class _OptimizationScreenState extends State<OptimizationScreen> {
+  final _stockLengthController = TextEditingController();
+  final _stockWidthController = TextEditingController();
+  final List<CutPiece> _cutPieces = [];
+  List<String> _results = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Start with one piece to cut by default
+    _addCutPiece();
+  }
+
+  void _addCutPiece() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _cutPieces.add(CutPiece());
+    });
+  }
+
+  void _removeCutPiece(int index) {
+    setState(() {
+      _cutPieces[index].lengthController.dispose();
+      _cutPieces[index].widthController.dispose();
+      _cutPieces[index].quantityController.dispose();
+      _cutPieces.removeAt(index);
+    });
+  }
+
+  void _optimizeCuts() {
+    final double stockLength = double.tryParse(_stockLengthController.text) ?? 0;
+    final double stockWidth = double.tryParse(_stockWidthController.text) ?? 0;
+
+    if (stockLength <= 0 || stockWidth <= 0) {
+      setState(() {
+        _results = ['Por favor, ingrese dimensiones válidas para el material base.'];
+      });
+      return;
+    }
+
+    final piecesToCut = _cutPieces.map((p) {
+      return {
+        'length': double.tryParse(p.lengthController.text) ?? 0,
+        'width': double.tryParse(p.widthController.text) ?? 0,
+        'quantity': int.tryParse(p.quantityController.text) ?? 0,
+      };
+    }).where((p) => p['length']! > 0 && p['width']! > 0 && p['quantity']! > 0).toList();
+
+    if (piecesToCut.isEmpty) {
+      setState(() {
+        _results = ['Por favor, ingrese al menos una pieza a cortar con dimensiones y cantidad válidas.'];
+      });
+      return;
+    }
+
+    // Placeholder for a real optimization algorithm
+    // This is a complex problem (Bin Packing), so we'll just show the inputs for now.
+    List<String> resultSummary = [
+      'Resumen de la solicitud de optimización:',
+      'Material base: $stockLength x $stockWidth',
+      'Piezas a cortar:',
+    ];
+
+    for (var piece in piecesToCut) {
+      resultSummary.add('- ${piece['quantity']}x de ${piece['length']} x ${piece['width']}');
+    }
+    
+    resultSummary.add('\n(Funcionalidad de algoritmo de optimización próximamente)');
+
+    setState(() {
+      _results = resultSummary;
     });
   }
 
   @override
+  void dispose() {
+    _stockLengthController.dispose();
+    _stockWidthController.dispose();
+    for (var piece in _cutPieces) {
+      piece.lengthController.dispose();
+      piece.widthController.dispose();
+      piece.quantityController.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Optimizador de Cortes'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildStockMaterialCard(),
+              const SizedBox(height: 20),
+              _buildCutPiecesCard(),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _optimizeCuts,
+                icon: const Icon(Icons.calculate),
+                label: const Text('Optimizar'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontSize: 18),
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildResultsCard(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStockMaterialCard() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Material Base', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildTextField(_stockLengthController, 'Largo')),
+                const SizedBox(width: 16),
+                Expanded(child: _buildTextField(_stockWidthController, 'Ancho')),
+              ],
+            ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _buildCutPiecesCard() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Piezas a Cortar', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _cutPieces.length,
+              itemBuilder: (context, index) {
+                return _buildCutPieceItem(index);
+              },
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: _addCutPiece,
+              icon: const Icon(Icons.add),
+              label: const Text('Añadir Pieza'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCutPieceItem(int index) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(child: _buildTextField(_cutPieces[index].lengthController, 'Largo')),
+          const SizedBox(width: 8),
+          Expanded(child: _buildTextField(_cutPieces[index].widthController, 'Ancho')),
+          const SizedBox(width: 8),
+          Expanded(child: _buildTextField(_cutPieces[index].quantityController, 'Cant.')),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+            onPressed: () => _removeCutPiece(index),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildResultsCard() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Resultados', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            if (_results.isEmpty)
+              const Text('Presione "Optimizar" para ver los resultados.')
+            else
+              ..._results.map((line) => Text(line, style: const TextStyle(fontSize: 16))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
     );
   }
 }
